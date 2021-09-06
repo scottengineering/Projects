@@ -1,10 +1,13 @@
-import pygame
+import pygame, sys
 import heapq
 import math
 
+pygame.init()
+
 size = 800
-window = pygame.display.set_mode((size, size))
+window = pygame.display.set_mode((size, size + 50))
 pygame.display.set_caption("Pathfinding Visualizer")
+font = pygame.font.SysFont('Constantia', 30)
 
 green = (51, 255, 51)
 yellow = (248, 255, 51)
@@ -12,6 +15,26 @@ black = (0, 0, 0)
 white = (255, 255, 255)
 red = (240, 22, 11)
 blue = (11, 27, 240)
+
+class Button:
+
+    def __init__(self, x, y, wide, high, text, color):
+        self.buttonRect = pygame.Rect((x, y), (wide, high))
+        self.font = pygame.font.SysFont("Arial", 40)
+        self.text = font.render(text, True, black)
+        self.textRect = self.text.get_rect(center = self.buttonRect.center)
+        self.color = color
+
+    def render(self, window):
+        mPos = pygame.mouse.get_pos()
+
+        if pygame.mouse.get_pressed()[0]:
+            if self.buttonRect.collidepoint(mPos):
+                pygame.draw.rect(window, red, self.buttonRect)
+        else:
+            pygame.draw.rect(window, self.color, self.buttonRect)
+
+        window.blit(self.text, self.textRect)
 
 class Node:
 
@@ -88,6 +111,9 @@ class Visualizer:
         self.drawBoard(window)
         pygame.display.update()
 
+    def resetBoard(self):
+        self.board = self.makeBoard()
+
     def getNode(self, pos):
         return self.board[pos[0]][pos[1]]
 
@@ -116,8 +142,12 @@ def main(window):
     endPos = (-1, -1)
     run = True
     started = False
+    button1 = Button(10, 810, 100, 30, 'Start', blue)
+    button2 = Button(120, 810, 100, 30, 'Start', blue)
     while run:
         vis.draw(window)
+        button1.render(window)
+        button2.render(window)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -125,27 +155,28 @@ def main(window):
             if started:
                 continue
 
-            if pygame.mouse.get_pressed()[0]:
-                pos = vis.clickPos(pygame.mouse.get_pos())
-                if not start:
-                    start = True
-                    vis.changeColor(pos, red)
-                    startPos = pos
-                elif not end:
-                    end = True
-                    vis.changeColor(pos, blue)
-                    endPos = pos
-                elif start and pos == startPos:
-                    start = False
-                    vis.changeColor(pos, white)
-                elif end and pos == endPos:
-                    end = False
-                    vis.changeColor(pos, white)
-            elif pygame.mouse.get_pressed()[2]:
-                pos = vis.clickPos(pygame.mouse.get_pos())
-                vis.changeColor(pos, black)
-                vis.setBarrier(pos, True)
-
+            mousePos = pygame.mouse.get_pos()
+            if mousePos[1] <= 800:
+                if pygame.mouse.get_pressed()[0]:
+                    pos = vis.clickPos(mousePos)
+                    if not start:
+                        start = True
+                        vis.changeColor(pos, red)
+                        startPos = pos
+                    elif not end:
+                        end = True
+                        vis.changeColor(pos, blue)
+                        endPos = pos
+                    elif start and pos == startPos:
+                        start = False
+                        vis.changeColor(pos, white)
+                    elif end and pos == endPos:
+                        end = False
+                        vis.changeColor(pos, white)
+                elif pygame.mouse.get_pressed()[2]:
+                    pos = vis.clickPos(pygame.mouse.get_pos())
+                    vis.changeColor(pos, black)
+                    vis.setBarrier(pos, True)
 
     pygame.quit()
 
