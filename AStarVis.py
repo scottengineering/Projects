@@ -15,15 +15,15 @@ black = (0, 0, 0)
 white = (255, 255, 255)
 red = (240, 22, 11)
 blue = (11, 27, 240)
+buttonCol = 189, 181, 177
 
 class Button:
 
-    def __init__(self, x, y, wide, high, text, color):
+    def __init__(self, x, y, wide, high, text):
         self.buttonRect = pygame.Rect((x, y), (wide, high))
-        self.font = pygame.font.SysFont("Arial", 40)
+        self.font = pygame.font.SysFont("Arial", 30)
         self.text = font.render(text, True, black)
         self.textRect = self.text.get_rect(center = self.buttonRect.center)
-        self.color = color
 
     def render(self, window):
         mPos = pygame.mouse.get_pos()
@@ -32,9 +32,12 @@ class Button:
             if self.buttonRect.collidepoint(mPos):
                 pygame.draw.rect(window, red, self.buttonRect)
         else:
-            pygame.draw.rect(window, self.color, self.buttonRect)
+            pygame.draw.rect(window, buttonCol, self.buttonRect)
 
         window.blit(self.text, self.textRect)
+
+    def getButtonRect(self):
+        return self.buttonRect
 
 class Node:
 
@@ -64,16 +67,6 @@ class Node:
 
     def drawRect(self, window):
         pygame.draw.rect(window, self.color, (self.x, self.y, self.width, self.width))
-
-class Pathfinder:
-
-    def __init__(self, start, end, board):
-        self.start = start
-        self.end = end
-        self.board = board
-
-    def mDist(self, pos):
-        return abs(pos[0] - self.end[0]) + abs(pos[1] - self.end[1])
 
 class Visualizer:
 
@@ -132,22 +125,74 @@ class Visualizer:
     def setBarrier(self, pos, bar):
         self.board[pos[0]][pos[1]].setBarrier(bar)
 
+    def isBarrier(self, pos):
+        return self.board[pos[0]][pos[1]].isBarrier()
+
+    def mDist(self, pos1, pos2):
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
+    def aStar(self, start, end, window):
+        pq = []
+        heapq.heappush(pq, (0, start, 0))
+        visited = set()
+        while len(pq) != 0:
+            cur = heapq.heappop(pq)
+            pos = cur[1]
+            trav = cur[2]
+            self.changeColor(pos, green)
+
+            if self.mDist(pos, end) == 0:
+                break
+
+            if pos[0] - 1 >= 0:
+                newPos1 = (pos[0] - 1, pos[1])
+                if newPos1 not in visited and not self.isBarrier(newPos1):
+                    visited.add(newPos1)
+                    self.changeColor(newPos1, yellow)
+                    heapq.heappush(pq, (trav + 1 + self.mDist(newPos1, end), newPos1, trav + 1))
+
+            if pos[0] + 1 < self.rows:
+                newPos2 = (pos[0] + 1, pos[1])
+                if newPos2 not in visited and not self.isBarrier(newPos2):
+                    visited.add(newPos2)
+                    self.changeColor(newPos2, yellow)
+                    heapq.heappush(pq, (trav + 1 + self.mDist(newPos2, end), newPos2, trav + 1))
+
+            if pos[1] - 1 >= 0:
+                newPos3 = (pos[0], pos[1] - 1)
+                if newPos3 not in visited and not self.isBarrier(newPos3):
+                    visited.add(newPos3)
+                    self.changeColor(newPos3, yellow)
+                    heapq.heappush(pq, (trav + 1 + self.mDist(newPos3, end), newPos3, trav + 1))
+
+            if pos[1] + 1 < self.rows:
+                newPos4 = (pos[0], pos[1] + 1)
+                if newPos4 not in visited and not self.isBarrier(newPos4):
+                    visited.add(newPos4)
+                    self.changeColor(newPos4, yellow)
+                    heapq.heappush(pq, (trav + 1 + self.mDist(newPos4, end), newPos4, trav + 1))
+
+            self.draw(window)
 
 def main(window):
     rows = 50
     vis = Visualizer(rows)
     start = False
     end = False
-    startPos = (-1, -1)
-    endPos = (-1, -1)
+    startPos = (0,0)
+    endPos = (0,0)
     run = True
     started = False
-    button1 = Button(10, 810, 100, 30, 'Start', blue)
-    button2 = Button(120, 810, 100, 30, 'Start', blue)
+    button1 = Button(10, 810, 100, 30, 'A*')
+    button2 = Button(120, 810, 100, 30, 'Start')
+    button3 = Button(230, 810, 100, 30, 'Reset')
+    startRect = button2.buttonRect
+    resetRect = button3.buttonRect
     while run:
         vis.draw(window)
         button1.render(window)
         button2.render(window)
+        button3.render(window)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -156,9 +201,9 @@ def main(window):
                 continue
 
             mousePos = pygame.mouse.get_pos()
-            if mousePos[1] <= 800:
-                if pygame.mouse.get_pressed()[0]:
-                    pos = vis.clickPos(mousePos)
+            if pygame.mouse.get_pressed()[0]:
+                pos = vis.clickPos(mousePos)
+                if mousePos[1] < size:
                     if not start:
                         start = True
                         vis.changeColor(pos, red)
@@ -167,16 +212,15 @@ def main(window):
                         end = True
                         vis.changeColor(pos, blue)
                         endPos = pos
-                    elif start and pos == startPos:
-                        start = False
-                        vis.changeColor(pos, white)
-                    elif end and pos == endPos:
-                        end = False
-                        vis.changeColor(pos, white)
-                elif pygame.mouse.get_pressed()[2]:
-                    pos = vis.clickPos(pygame.mouse.get_pos())
-                    vis.changeColor(pos, black)
-                    vis.setBarrier(pos, True)
+                    else:
+                        vis.changeColor(pos, black)
+                        vis.setBarrier(pos, True)
+                elif startRect.collidepoint(mousePos) and start and end:
+                    vis.aStar(startPos, endPos, window)
+                elif resetRect.collidepoint(mousePos):
+                    start = False
+                    end = False
+                    vis.resetBoard()
 
     pygame.quit()
 
