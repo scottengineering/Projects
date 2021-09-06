@@ -129,12 +129,14 @@ class Visualizer:
         return self.board[pos[0]][pos[1]].isBarrier()
 
     def mDist(self, pos1, pos2):
-        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+        return math.sqrt(((pos2[0]-pos1[0])**2) + ((pos2[1]-pos1[1])**2))
+        # return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
     def aStar(self, start, end, window):
         pq = []
         heapq.heappush(pq, (0, start, 0))
         visited = set()
+        backMap = {}
         while len(pq) != 0:
             cur = heapq.heappop(pq)
             pos = cur[1]
@@ -146,31 +148,84 @@ class Visualizer:
 
             if pos[0] - 1 >= 0:
                 newPos1 = (pos[0] - 1, pos[1])
+                if newPos1 not in backMap and not self.isBarrier(newPos1):
+                    backMap[newPos1] = pos
+                    self.changeColor(newPos1, yellow)
+                    heapq.heappush(pq, (self.mDist(newPos1, end) + trav + 1, newPos1, trav + 1))
+
+            if pos[0] + 1 < self.rows:
+                newPos2 = (pos[0] + 1, pos[1])
+                if newPos2 not in backMap and not self.isBarrier(newPos2):
+                    backMap[newPos2] = pos
+                    self.changeColor(newPos2, yellow)
+                    heapq.heappush(pq, (self.mDist(newPos2, end) + trav + 1, newPos2, trav + 1))
+
+            if pos[1] - 1 >= 0:
+                newPos3 = (pos[0], pos[1] - 1)
+                if newPos3 not in backMap and not self.isBarrier(newPos3):
+                    backMap[newPos3] = pos
+                    self.changeColor(newPos3, yellow)
+                    heapq.heappush(pq, (self.mDist(newPos3, end) + trav + 1, newPos3, trav + 1))
+
+            if pos[1] + 1 < self.rows:
+                newPos4 = (pos[0], pos[1] + 1)
+                if newPos4 not in backMap and not self.isBarrier(newPos4):
+                    backMap[newPos4] = pos
+                    self.changeColor(newPos4, yellow)
+                    heapq.heappush(pq, (self.mDist(newPos4, end) + trav + 1, newPos4, trav + 1))
+
+            self.draw(window)
+
+        cur = end
+        self.changeColor(end, red)
+        while cur != start:
+            cur = backMap[cur]
+            self.changeColor(cur, red)
+
+        self.changeColor(start, red)
+
+        self.draw(window)
+
+    def dijkstra(self, start, end, window):
+        pq = []
+        heapq.heappush(pq, (0, start, 0))
+        visited = set()
+        while len(pq) != 0:
+            cur = heapq.heappop(pq)
+            pos = cur[1]
+            trav = cur[0]
+            self.changeColor(pos, green)
+
+            if self.mDist(pos, end) == 0:
+                break
+
+            if pos[0] - 1 >= 0:
+                newPos1 = (pos[0] - 1, pos[1])
                 if newPos1 not in visited and not self.isBarrier(newPos1):
                     visited.add(newPos1)
                     self.changeColor(newPos1, yellow)
-                    heapq.heappush(pq, (trav + 1 + self.mDist(newPos1, end), newPos1, trav + 1))
+                    heapq.heappush(pq, (trav + 1, newPos1))
 
             if pos[0] + 1 < self.rows:
                 newPos2 = (pos[0] + 1, pos[1])
                 if newPos2 not in visited and not self.isBarrier(newPos2):
                     visited.add(newPos2)
                     self.changeColor(newPos2, yellow)
-                    heapq.heappush(pq, (trav + 1 + self.mDist(newPos2, end), newPos2, trav + 1))
+                    heapq.heappush(pq, (trav + 1, newPos2))
 
             if pos[1] - 1 >= 0:
                 newPos3 = (pos[0], pos[1] - 1)
                 if newPos3 not in visited and not self.isBarrier(newPos3):
                     visited.add(newPos3)
                     self.changeColor(newPos3, yellow)
-                    heapq.heappush(pq, (trav + 1 + self.mDist(newPos3, end), newPos3, trav + 1))
+                    heapq.heappush(pq, (trav + 1, newPos3))
 
             if pos[1] + 1 < self.rows:
                 newPos4 = (pos[0], pos[1] + 1)
                 if newPos4 not in visited and not self.isBarrier(newPos4):
                     visited.add(newPos4)
                     self.changeColor(newPos4, yellow)
-                    heapq.heappush(pq, (trav + 1 + self.mDist(newPos4, end), newPos4, trav + 1))
+                    heapq.heappush(pq, (trav + 1, newPos4))
 
             self.draw(window)
 
@@ -184,10 +239,12 @@ def main(window):
     run = True
     started = False
     button1 = Button(10, 810, 100, 30, 'A*')
-    button2 = Button(120, 810, 100, 30, 'Start')
+    button2 = Button(120, 810, 100, 30, 'Dijkstra')
     button3 = Button(230, 810, 100, 30, 'Reset')
-    startRect = button2.buttonRect
+    aStarRect = button1.buttonRect
+    dijkstraRec = button2.buttonRect
     resetRect = button3.buttonRect
+    startSet = set()
     while run:
         vis.draw(window)
         button1.render(window)
@@ -208,18 +265,23 @@ def main(window):
                         start = True
                         vis.changeColor(pos, red)
                         startPos = pos
+                        startSet.add(pos)
                     elif not end:
                         end = True
                         vis.changeColor(pos, blue)
                         endPos = pos
-                    else:
+                        startSet.add(pos)
+                    elif pos not in startSet:
                         vis.changeColor(pos, black)
                         vis.setBarrier(pos, True)
-                elif startRect.collidepoint(mousePos) and start and end:
+                elif dijkstraRec.collidepoint(mousePos) and start and end:
+                    vis.dijkstra(startPos, endPos, window)
+                elif aStarRect.collidepoint(mousePos) and start and end:
                     vis.aStar(startPos, endPos, window)
                 elif resetRect.collidepoint(mousePos):
                     start = False
                     end = False
+                    startSet.clear()
                     vis.resetBoard()
 
     pygame.quit()
