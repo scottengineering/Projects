@@ -176,15 +176,16 @@ class Visualizer:
 
             self.draw(window)
 
-        cur = end
-        self.changeColor(end, red)
-        while cur != start:
-            cur = backMap[cur]
-            self.changeColor(cur, red)
+        if end in backMap:
+            cur = end
+            self.changeColor(end, red)
+            while cur != start:
+                cur = backMap[cur]
+                self.changeColor(cur, red)
 
-        self.changeColor(start, red)
+            self.changeColor(start, red)
 
-        self.draw(window)
+            self.draw(window)
 
     def dijkstra(self, start, end, window):
         pq = []
