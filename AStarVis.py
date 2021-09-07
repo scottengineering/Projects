@@ -17,6 +17,7 @@ red = (240, 22, 11)
 blue = (11, 27, 240)
 buttonCol = 189, 181, 177
 
+# Allows for the creation of a button with text and reaction to being pressed
 class Button:
 
     def __init__(self, x, y, wide, high, text):
@@ -39,6 +40,7 @@ class Button:
     def getButtonRect(self):
         return self.buttonRect
 
+# Class allows creates a node in the board that holds render information as well as position
 class Node:
 
     def __init__(self, pos, color, width):
@@ -68,6 +70,7 @@ class Node:
     def drawRect(self, window):
         pygame.draw.rect(window, self.color, (self.x, self.y, self.width, self.width))
 
+# Handles rendering board and running pathfinding algorithms
 class Visualizer:
 
     def __init__(self, rows):
@@ -135,7 +138,6 @@ class Visualizer:
     def aStar(self, start, end, window):
         pq = []
         heapq.heappush(pq, (0, start, 0))
-        visited = set()
         backMap = {}
         while len(pq) != 0:
             cur = heapq.heappop(pq)
@@ -143,9 +145,11 @@ class Visualizer:
             trav = cur[2]
             self.changeColor(pos, green)
 
+            # See if this is final node
             if self.mDist(pos, end) == 0:
                 break
 
+            # Check North and if on the board set color to green and place in min heap
             if pos[0] - 1 >= 0:
                 newPos1 = (pos[0] - 1, pos[1])
                 if newPos1 not in backMap and not self.isBarrier(newPos1):
@@ -153,6 +157,7 @@ class Visualizer:
                     self.changeColor(newPos1, yellow)
                     heapq.heappush(pq, (self.mDist(newPos1, end) + trav + 1, newPos1, trav + 1))
 
+            # Check South and if on the board set color to green and place in min heapv
             if pos[0] + 1 < self.rows:
                 newPos2 = (pos[0] + 1, pos[1])
                 if newPos2 not in backMap and not self.isBarrier(newPos2):
@@ -160,6 +165,7 @@ class Visualizer:
                     self.changeColor(newPos2, yellow)
                     heapq.heappush(pq, (self.mDist(newPos2, end) + trav + 1, newPos2, trav + 1))
 
+            # Check West and if on the board set color to green and place in min heap
             if pos[1] - 1 >= 0:
                 newPos3 = (pos[0], pos[1] - 1)
                 if newPos3 not in backMap and not self.isBarrier(newPos3):
@@ -167,6 +173,7 @@ class Visualizer:
                     self.changeColor(newPos3, yellow)
                     heapq.heappush(pq, (self.mDist(newPos3, end) + trav + 1, newPos3, trav + 1))
 
+            # Check East and if on the board set color to green and place in min heap
             if pos[1] + 1 < self.rows:
                 newPos4 = (pos[0], pos[1] + 1)
                 if newPos4 not in backMap and not self.isBarrier(newPos4):
@@ -174,6 +181,7 @@ class Visualizer:
                     self.changeColor(newPos4, yellow)
                     heapq.heappush(pq, (self.mDist(newPos4, end) + trav + 1, newPos4, trav + 1))
 
+            # Draw changes
             self.draw(window)
 
         if end in backMap:
@@ -197,9 +205,11 @@ class Visualizer:
             trav = cur[0]
             self.changeColor(pos, green)
 
+            # See if this is final node
             if self.mDist(pos, end) == 0:
                 break
 
+            # Check North and if on the board set color to green and place in min heap
             if pos[0] - 1 >= 0:
                 newPos1 = (pos[0] - 1, pos[1])
                 if newPos1 not in visited and not self.isBarrier(newPos1):
@@ -207,6 +217,7 @@ class Visualizer:
                     self.changeColor(newPos1, yellow)
                     heapq.heappush(pq, (trav + 1, newPos1))
 
+            # Check South and if on the board set color to green and place in min heap
             if pos[0] + 1 < self.rows:
                 newPos2 = (pos[0] + 1, pos[1])
                 if newPos2 not in visited and not self.isBarrier(newPos2):
@@ -214,6 +225,7 @@ class Visualizer:
                     self.changeColor(newPos2, yellow)
                     heapq.heappush(pq, (trav + 1, newPos2))
 
+            # Check West and if on the board set color to green and place in min heap
             if pos[1] - 1 >= 0:
                 newPos3 = (pos[0], pos[1] - 1)
                 if newPos3 not in visited and not self.isBarrier(newPos3):
@@ -221,6 +233,7 @@ class Visualizer:
                     self.changeColor(newPos3, yellow)
                     heapq.heappush(pq, (trav + 1, newPos3))
 
+            # Check East and if on the board set color to green and place in min heap
             if pos[1] + 1 < self.rows:
                 newPos4 = (pos[0], pos[1] + 1)
                 if newPos4 not in visited and not self.isBarrier(newPos4):
@@ -228,6 +241,7 @@ class Visualizer:
                     self.changeColor(newPos4, yellow)
                     heapq.heappush(pq, (trav + 1, newPos4))
 
+            # Draw Changes
             self.draw(window)
 
 def main(window):
@@ -238,7 +252,6 @@ def main(window):
     startPos = (0,0)
     endPos = (0,0)
     run = True
-    started = False
     button1 = Button(10, 810, 100, 30, 'A*')
     button2 = Button(120, 810, 100, 30, 'Dijkstra')
     button3 = Button(230, 810, 100, 30, 'Reset')
@@ -252,15 +265,15 @@ def main(window):
         button2.render(window)
         button3.render(window)
         for event in pygame.event.get():
+            # If user presses x in corner of window
             if event.type == pygame.QUIT:
                 run = False
 
-            if started:
-                continue
-
             mousePos = pygame.mouse.get_pos()
             if pygame.mouse.get_pressed()[0]:
+                # converts mouse position to board position
                 pos = vis.clickPos(mousePos)
+                # Left Click
                 if mousePos[1] < size:
                     if not start:
                         start = True
@@ -275,10 +288,13 @@ def main(window):
                     elif pos not in startSet:
                         vis.changeColor(pos, black)
                         vis.setBarrier(pos, True)
+                # Clicks on Dijkstra button
                 elif dijkstraRec.collidepoint(mousePos) and start and end:
                     vis.dijkstra(startPos, endPos, window)
+                # Clicks on A* button
                 elif aStarRect.collidepoint(mousePos) and start and end:
                     vis.aStar(startPos, endPos, window)
+                # Clicks Reset
                 elif resetRect.collidepoint(mousePos):
                     start = False
                     end = False
