@@ -120,7 +120,15 @@ class Visualizer:
         return (col, row)
 
 def main(window):
-
+    rows = 10
+    vis = Visualizer(10)
+    run = True
+    while run:
+        vis.draw(window)
+        for event in pygame.event.get():
+            # If user presses x in corner of window
+            if event.type == pygame.QUIT:
+                run = False
 
     pygame.quit()
 
