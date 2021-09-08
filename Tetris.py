@@ -4,18 +4,21 @@ import math
 
 pygame.init()
 
-size = 800
-window = pygame.display.set_mode((size, size + 50))
+size = 200
+window = pygame.display.set_mode((size, size * 4))
 pygame.display.set_caption("Tetris")
 font = pygame.font.SysFont('Constantia', 30)
 
-green = (51, 255, 51)
-yellow = (248, 255, 51)
+green = (114, 203, 59)
+yellow = (255, 213, 0)
+orange = (255, 151, 28)
 black = (0, 0, 0)
 white = (255, 255, 255)
-red = (240, 22, 11)
-blue = (11, 27, 240)
+red = (255, 50, 19)
+blue = (3, 65, 174)
 buttonCol = 189, 181, 177
+
+colorList = [blue, green, yellow, orange, red]
 
 # Allows for the creation of a button with text and reaction to being pressed
 class Button:
@@ -80,10 +83,10 @@ class Visualizer:
 
     def makeBoard(self):
         retBoard = []
-        for i in range(self.rows):
+        for i in range(40):
             rowList = []
-            for j in range(self.rows):
-                newNode = Node((i,j), white, self.nodeWidth)
+            for j in range(10):
+                newNode = Node((i,j), red, self.nodeWidth)
                 rowList.append(newNode)
 
             retBoard.append(rowList)
@@ -120,7 +123,7 @@ class Visualizer:
         return (col, row)
 
 def main(window):
-    rows = 10
+    rows = 40
     vis = Visualizer(10)
     run = True
     while run:

@@ -184,6 +184,7 @@ class Visualizer:
             # Draw changes
             self.draw(window)
 
+        # Backtrack to find best path
         if end in backMap:
             cur = end
             self.changeColor(end, red)
@@ -191,14 +192,12 @@ class Visualizer:
                 cur = backMap[cur]
                 self.changeColor(cur, red)
 
-            self.changeColor(start, red)
-
             self.draw(window)
 
     def dijkstra(self, start, end, window):
         pq = []
         heapq.heappush(pq, (0, start, 0))
-        visited = set()
+        backMap = {}
         while len(pq) != 0:
             cur = heapq.heappop(pq)
             pos = cur[1]
@@ -212,36 +211,78 @@ class Visualizer:
             # Check North and if on the board set color to green and place in min heap
             if pos[0] - 1 >= 0:
                 newPos1 = (pos[0] - 1, pos[1])
-                if newPos1 not in visited and not self.isBarrier(newPos1):
-                    visited.add(newPos1)
+                if newPos1 not in backMap and not self.isBarrier(newPos1):
+                    backMap[newPos1] = pos
                     self.changeColor(newPos1, yellow)
                     heapq.heappush(pq, (trav + 1, newPos1))
+
+            # Check Northeast and if on the board set color to green and place in min heap
+            if pos[0] - 1 >= 0 and pos[1] + 1 < self.rows:
+                newPosNE = (pos[0] - 1, pos[1] + 1)
+                if newPosNE not in backMap and not self.isBarrier(newPosNE):
+                    backMap[newPosNE] = pos
+                    self.changeColor(newPosNE, yellow)
+                    heapq.heappush(pq, (trav + 1, newPosNE))
 
             # Check South and if on the board set color to green and place in min heap
             if pos[0] + 1 < self.rows:
                 newPos2 = (pos[0] + 1, pos[1])
-                if newPos2 not in visited and not self.isBarrier(newPos2):
-                    visited.add(newPos2)
+                if newPos2 not in backMap and not self.isBarrier(newPos2):
+                    backMap[newPos2] = pos
                     self.changeColor(newPos2, yellow)
                     heapq.heappush(pq, (trav + 1, newPos2))
+
+            # Check Southeast and if on the board set color to green and place in min heap
+            if pos[0] + 1 < self.rows and pos[1] + 1 < self.rows:
+                newPosSE = (pos[0] + 1, pos[1] + 1)
+                if newPosSE not in backMap and not self.isBarrier(newPosSE):
+                    backMap[newPosSE] = pos
+                    self.changeColor(newPosSE, yellow)
+                    heapq.heappush(pq, (trav + 1, newPosSE))
 
             # Check West and if on the board set color to green and place in min heap
             if pos[1] - 1 >= 0:
                 newPos3 = (pos[0], pos[1] - 1)
-                if newPos3 not in visited and not self.isBarrier(newPos3):
-                    visited.add(newPos3)
+                if newPos3 not in backMap and not self.isBarrier(newPos3):
+                    backMap[newPos3] = pos
                     self.changeColor(newPos3, yellow)
                     heapq.heappush(pq, (trav + 1, newPos3))
+
+            # Check Southwest and if on the board set color to green and place in min heap
+            if pos[0] + 1 < self.rows and pos[1] - 1 >= 0:
+                newPosSW = (pos[0] + 1, pos[1] - 1)
+                if newPosSW not in backMap and not self.isBarrier(newPosSW):
+                    backMap[newPosSW] = pos
+                    self.changeColor(newPosSW, yellow)
+                    heapq.heappush(pq, (trav + 1, newPosSW))
 
             # Check East and if on the board set color to green and place in min heap
             if pos[1] + 1 < self.rows:
                 newPos4 = (pos[0], pos[1] + 1)
-                if newPos4 not in visited and not self.isBarrier(newPos4):
-                    visited.add(newPos4)
+                if newPos4 not in backMap and not self.isBarrier(newPos4):
+                    backMap[newPos4] = pos
                     self.changeColor(newPos4, yellow)
                     heapq.heappush(pq, (trav + 1, newPos4))
 
+            # Check Northeast and if on the board set color to green and place in min heap
+            if pos[0] - 1 >= 0 and pos[1] - 1 >= 0:
+                newPosNE = (pos[0] - 1, pos[1] - 1)
+                if newPosNE not in backMap and not self.isBarrier(newPosNE):
+                    backMap[newPosNE] = pos
+                    self.changeColor(newPosNE, yellow)
+                    heapq.heappush(pq, (trav + 1, newPosNE))
+
             # Draw Changes
+            self.draw(window)
+
+        # Backtrack to find best path
+        if end in backMap:
+            cur = end
+            self.changeColor(end, red)
+            while cur != start:
+                cur = backMap[cur]
+                self.changeColor(cur, red)
+
             self.draw(window)
 
 def main(window):
