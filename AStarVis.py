@@ -157,13 +157,29 @@ class Visualizer:
                     self.changeColor(newPos1, yellow)
                     heapq.heappush(pq, (self.mDist(newPos1, end) + trav + 1, newPos1, trav + 1))
 
-            # Check South and if on the board set color to green and place in min heapv
+            # Check Northeast and if on the board set color to green and place in min heap
+            if pos[0] - 1 >= 0 and pos[1] + 1 < self.rows:
+                newPosNE = (pos[0] - 1, pos[1] + 1)
+                if newPosNE not in backMap and not self.isBarrier(newPosNE):
+                    backMap[newPosNE] = pos
+                    self.changeColor(newPosNE, yellow)
+                    heapq.heappush(pq, (self.mDist(newPosNE, end) + trav + 1, newPosNE, trav + 1))
+
+            # Check South and if on the board set color to green and place in min heap
             if pos[0] + 1 < self.rows:
                 newPos2 = (pos[0] + 1, pos[1])
                 if newPos2 not in backMap and not self.isBarrier(newPos2):
                     backMap[newPos2] = pos
                     self.changeColor(newPos2, yellow)
                     heapq.heappush(pq, (self.mDist(newPos2, end) + trav + 1, newPos2, trav + 1))
+
+            # Check Southeast and if on the board set color to green and place in min heap
+            if pos[0] + 1 < self.rows and pos[1] + 1 < self.rows:
+                newPosSE = (pos[0] + 1, pos[1] + 1)
+                if newPosSE not in backMap and not self.isBarrier(newPosSE):
+                    backMap[newPosSE] = pos
+                    self.changeColor(newPosSE, yellow)
+                    heapq.heappush(pq, (self.mDist(newPosSE, end) + trav + 1, newPosSE, trav + 1))
 
             # Check West and if on the board set color to green and place in min heap
             if pos[1] - 1 >= 0:
@@ -173,6 +189,14 @@ class Visualizer:
                     self.changeColor(newPos3, yellow)
                     heapq.heappush(pq, (self.mDist(newPos3, end) + trav + 1, newPos3, trav + 1))
 
+            # Check Southwest and if on the board set color to green and place in min heap
+            if pos[0] + 1 < self.rows and pos[1] - 1 >= 0:
+                newPosSW = (pos[0] + 1, pos[1] - 1)
+                if newPosSW not in backMap and not self.isBarrier(newPosSW):
+                    backMap[newPosSW] = pos
+                    self.changeColor(newPosSW, yellow)
+                    heapq.heappush(pq, (self.mDist(newPosSW, end) + trav + 1, newPosSW, trav + 1))
+
             # Check East and if on the board set color to green and place in min heap
             if pos[1] + 1 < self.rows:
                 newPos4 = (pos[0], pos[1] + 1)
@@ -180,6 +204,14 @@ class Visualizer:
                     backMap[newPos4] = pos
                     self.changeColor(newPos4, yellow)
                     heapq.heappush(pq, (self.mDist(newPos4, end) + trav + 1, newPos4, trav + 1))
+
+            # Check Northeast and if on the board set color to green and place in min heap
+            if pos[0] - 1 >= 0 and pos[1] - 1 >= 0:
+                newPosNE = (pos[0] - 1, pos[1] - 1)
+                if newPosNE not in backMap and not self.isBarrier(newPosNE):
+                    backMap[newPosNE] = pos
+                    self.changeColor(newPosNE, yellow)
+                    heapq.heappush(pq, (self.mDist(newPosNE, end) + trav + 1, newPosNE, trav + 1))
 
             # Draw changes
             self.draw(window)
