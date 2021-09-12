@@ -8,9 +8,7 @@ pygame.init()
 
 size = 800
 blockSize = size // 20
-print(blockSize)
 halfBlock = blockSize // 2
-print(halfBlock)
 offsetL = (size - (blockSize * 10)) // 2
 offSetR = size - offsetL
 window = pygame.display.set_mode((size, size))
@@ -84,23 +82,36 @@ class TetrisPiece:
         self.rotateNum = 1
         self.shape = None
         self.posList = []
+        self.xMax = blockSize * 2
+        self.xMin = -blockSize
+        self.yMax = blockSize
+        self.yMin = -blockSize
+        self.pieceNum = pieceNum
         if pieceNum == 1:
             self.shape = self.sShape
         elif pieceNum == 2:
             self.shape = self.zShape
         elif pieceNum == 3:
             self.shape = self.iShape
+            self.xMin = -blockSize * 2
+            self.yMin = 0
         elif pieceNum == 4:
             self.shape = self.boxShape
+            self.xMax = blockSize
         elif pieceNum == 5:
             self.shape = self.jShape
+            self.xMin = -blockSize * 2
         elif pieceNum == 6:
             self.shape = self.lShape
+            self.xMin = -blockSize * 2
         elif pieceNum == 7:
             self.shape = self.tShape
 
     def drawPiece(self, window):
         self.shape(window)
+
+    def getColor(self):
+        return self.color
 
     def moveY(self, increment):
         self.y += increment
@@ -111,6 +122,15 @@ class TetrisPiece:
     def getY(self):
         return self.y
 
+    def getXMax(self):
+        return self.x + self.xMax
+
+    def getXMin(self):
+        return self.x + self.xMin
+
+    def getYMax(self):
+        return self.y + self.yMax
+
     def newRotate(self, num):
         if self.rotateNum + num < 1:
             self.rotateNum = 4
@@ -119,84 +139,185 @@ class TetrisPiece:
         else:
             self.rotateNum += num
 
+        if self.rotateNum == 1:
+            self.yMax = blockSize
+            self.yMin = -blockSize
+            if self.pieceNum == 4:
+                self.xMax = blockSize
+                self.xMin = -blockSize
+            elif self.pieceNum == 3 or self.rotateNum == 5 or self.rotateNum == 6:
+                if self.pieceNum == 3:
+                    self.yMin = 0
+                self.xMax = blockSize * 2
+                self.xMin = -blockSize * 2
+            else:
+                self.xMax = blockSize * 2
+                self.xMin = -blockSize
+        elif self.rotateNum == 2:
+            self.xMin = 0
+            self.yMin = -blockSize
+            if self.pieceNum == 3:
+                self.xMax = blockSize
+                self.yMax = blockSize * 2
+                self.yMin = -blockSize * 2
+            elif self.pieceNum == 4:
+                self.xMax = blockSize * 2
+                self.yMax = blockSize
+            else:
+                self.xMax = blockSize * 2
+                self.yMax = blockSize * 2
+        elif self.rotateNum == 3:
+            self.yMin = 0
+            if self.pieceNum == 3:
+                self.xMax = blockSize * 3
+                self.xMin = -blockSize
+                self.yMax = blockSize
+            elif self.pieceNum == 4:
+                self.xMax = blockSize * 2
+                self.xMin = 0
+                self.yMax = blockSize * 2
+            else:
+                self.xMax = blockSize * 2
+                self.xMin = -blockSize
+                self.yMax = blockSize * 2
+        else:
+            self.yMin = 0
+            if self.pieceNum == 3:
+                self.xMax = blockSize
+                self.xMin = 0
+                self.yMax = blockSize * 3
+            elif self.pieceNum == 4:
+                self.yMin = 0
+                self.xMax = blockSize
+                self.xMin = -blockSize
+                self.yMax = blockSize
+            elif self.pieceNum == 7:
+                self.xMax = blockSize * 2
+                self.xMin = 0
+                self.yMax = blockSize * 2
+            else:
+                self.xMax = blockSize
+                self.xMin = -blockSize
+                self.yMax = blockSize * 2
+
+
+
     def rotate(self, x, y):
         if self.rotateNum == 1:
             return (self.x + x, self.y + y)
         elif self.rotateNum == 2:
             return (self.x + (y * -1), self.y + x)
         elif self.rotateNum == 3:
-            return (self.x + (x * -1), self.y + (y * -1) - blockSize)
+            return (self.x + (x * -1), self.y + (y * -1))
         elif self.rotateNum == 4:
             return (self.x + y, self.y + (x * -1))
 
+    def getPosList(self):
+        return self.posList
+
     def sShape(self, window):
+        self.posList.clear()
         pos = self.rotate(blockSize, -blockSize)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(0, -blockSize)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(0, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(-blockSize, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
 
     def zShape(self, window):
+        self.posList.clear()
         pos = self.rotate(-blockSize, -blockSize)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(0, -blockSize)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(0, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(blockSize, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
 
     def iShape(self, window):
+        self.posList.clear()
         pos = self.rotate(-(blockSize * 2), 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(-blockSize, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(0, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(blockSize, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
 
     def boxShape(self, window):
+        self.posList.clear()
         pos = self.rotate(-blockSize, -blockSize)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(0, -blockSize)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(-blockSize, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(0, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
 
     def jShape(self, window):
+        self.posList.clear()
         pos = self.rotate(-blockSize, -blockSize)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(-blockSize, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(0, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(blockSize, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
 
     def lShape(self, window):
+        self.posList.clear()
         pos = self.rotate(blockSize, -blockSize)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(blockSize, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(0, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(-blockSize, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
 
     def tShape(self, window):
+        self.posList.clear()
         pos = self.rotate(blockSize, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(-blockSize, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(0, 0)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pos = self.rotate(0, -blockSize)
+        self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
 
 # Handles rendering board and running pathfinding algorithms
@@ -205,9 +326,10 @@ class Visualizer:
     def __init__(self):
         self.nodeWidth = (size - 100) // 10
         self.board = self.makeBoard()
-        # self.curPiece = TetrisPiece(random.randrange(1,7),colorList[random.randrange(0,4)])
-        self.curPiece = TetrisPiece(1,colorList[random.randrange(0,4)])
+        self.curPiece = TetrisPiece(random.randrange(1,8),colorList[random.randrange(0,5)])
         self.pieceSpeed = 1
+        self.pieceSet = set()
+        self.gameOver = False
 
     def makeBoard(self):
         retBoard = []
@@ -236,9 +358,20 @@ class Visualizer:
                 n.drawRect(window)
 
         self.drawBoard(window)
-        self.curPiece.drawPiece(window)
-        if self.curPiece.getY() < size - blockSize * 2:
-            self.curPiece.moveY(self.pieceSpeed)
+        if not self.gameOver:
+            self.curPiece.drawPiece(window)
+            if self.curPiece.getYMax() < size:
+                self.curPiece.moveY(self.pieceSpeed)
+                for pos in self.curPiece.getPosList():
+                    y = ((pos[1] + blockSize) // blockSize)
+                    x = ((pos[0] - offsetL) // blockSize)
+                    nextPos = (x, y)
+                    if nextPos in self.pieceSet:
+                        self.boardAdd()
+                        break
+            else:
+                self.boardAdd()
+
         pygame.display.update()
 
     def resetBoard(self):
@@ -247,19 +380,14 @@ class Visualizer:
     def getNode(self, pos):
         return self.board[pos[0]][pos[1]]
 
-    def clickPos(self, pos):
-        row = pos[0] // self.nodeWidth
-        col = pos[1] // self.nodeWidth
-
-        return (col, row)
-
     def addPiece(self, piece):
         self.curPiece = piece
 
     def movePieceX(self, incr):
-        self.curPiece.moveX(incr)
+        if incr == 1 and self.curPiece.getXMax() < offSetR or incr == -1 and self.curPiece.getXMin() > offsetL:
+            self.curPiece.moveX(incr)
 
-    def movePiecey(self, incr):
+    def movePieceY(self, incr):
         self.curPiece.moveY(incr)
 
     def rotatePiece(self, num):
@@ -267,6 +395,16 @@ class Visualizer:
 
     def dropPiece(self):
         self.pieceSpeed = 20
+
+    def boardAdd(self):
+        for pos in self.curPiece.getPosList():
+            y = (pos[1] // blockSize)
+            x = ((pos[0] - offsetL) // blockSize)
+            self.pieceSet.add((x, y))
+            self.board[y][x].setColor(self.curPiece.getColor())
+
+        self.pieceSpeed = 1
+        self.curPiece = TetrisPiece(random.randrange(1,8),colorList[random.randrange(0,5)])
 
 def main(window):
     vis = Visualizer()
