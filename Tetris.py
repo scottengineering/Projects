@@ -1,7 +1,7 @@
 import random
 
 import pygame, sys
-import heapq
+import collections
 import math
 
 pygame.init()
@@ -29,7 +29,7 @@ colorList = [blue, green, yellow, orange, red]
 # Allows for the creation of a button with text and reaction to being pressed
 class Button:
 
-    def __init__(self, x, y, wide, high, text):
+    def __init__(self, x, y, wide, high, text, onlyText):
         self.buttonRect = pygame.Rect((x, y), (wide, high))
         self.font = pygame.font.SysFont("Arial", 30)
         self.text = font.render(text, True, black)
@@ -58,6 +58,7 @@ class Node:
         self.width = width
         self.y = pos[0]
         self.x = pos[1]
+        self.filled = False
 
     def getColor(self):
         self.color = red
@@ -69,8 +70,19 @@ class Node:
     def getPosition(self):
         return self.pos
 
+    def isFilled(self):
+        self.filled = True
+
+    def getFilled(self):
+        return self.filled
+
     def drawRect(self, window):
         pygame.draw.rect(window, self.color, (self.x, self.y, self.width, self.width))
+        if self.filled:
+            pygame.draw.line(window, black, (self.x, self.y), (self.x + self.width, self.y))
+            pygame.draw.line(window, black, (self.x, self.y), (self.x, self.y + self.width))
+            pygame.draw.line(window, black, (self.x + self.width, self.y), (self.x + self.width, self.y + self.width))
+            pygame.draw.line(window, black, (self.x, self.y + self.width), (self.x + self.width, self.y + self.width))
 
 # Makes and renders shape
 class TetrisPiece:
@@ -100,10 +112,10 @@ class TetrisPiece:
             self.xMax = blockSize
         elif pieceNum == 5:
             self.shape = self.jShape
-            self.xMin = -blockSize * 2
+            self.xMin = -blockSize
         elif pieceNum == 6:
             self.shape = self.lShape
-            self.xMin = -blockSize * 2
+            self.xMin = -blockSize
         elif pieceNum == 7:
             self.shape = self.tShape
 
@@ -131,6 +143,9 @@ class TetrisPiece:
     def getYMax(self):
         return self.y + self.yMax
 
+    def getYMin(self):
+        return self.y + self.yMin
+
     def newRotate(self, num):
         if self.rotateNum + num < 1:
             self.rotateNum = 4
@@ -145,9 +160,8 @@ class TetrisPiece:
             if self.pieceNum == 4:
                 self.xMax = blockSize
                 self.xMin = -blockSize
-            elif self.pieceNum == 3 or self.rotateNum == 5 or self.rotateNum == 6:
-                if self.pieceNum == 3:
-                    self.yMin = 0
+            elif self.pieceNum == 3:
+                self.yMin = 0
                 self.xMax = blockSize * 2
                 self.xMin = -blockSize * 2
             else:
@@ -181,7 +195,7 @@ class TetrisPiece:
                 self.xMin = -blockSize
                 self.yMax = blockSize * 2
         else:
-            self.yMin = 0
+            self.yMin = -blockSize
             if self.pieceNum == 3:
                 self.xMax = blockSize
                 self.xMin = 0
@@ -191,16 +205,15 @@ class TetrisPiece:
                 self.xMax = blockSize
                 self.xMin = -blockSize
                 self.yMax = blockSize
-            elif self.pieceNum == 7:
-                self.xMax = blockSize * 2
-                self.xMin = 0
-                self.yMax = blockSize * 2
             else:
                 self.xMax = blockSize
                 self.xMin = -blockSize
                 self.yMax = blockSize * 2
 
-
+        if self.x + self.xMax > offSetR:
+            self.x -= ((self.x + self.xMax) - offSetR)
+        elif self.x + self.xMin < offsetL:
+            self.x += (offsetL - (self.x + self.xMin))
 
     def rotate(self, x, y):
         if self.rotateNum == 1:
@@ -220,105 +233,217 @@ class TetrisPiece:
         pos = self.rotate(blockSize, -blockSize)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(0, -blockSize)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(0, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(-blockSize, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
 
     def zShape(self, window):
         self.posList.clear()
         pos = self.rotate(-blockSize, -blockSize)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(0, -blockSize)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(0, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(blockSize, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
 
     def iShape(self, window):
         self.posList.clear()
         pos = self.rotate(-(blockSize * 2), 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(-blockSize, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(0, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(blockSize, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
 
     def boxShape(self, window):
         self.posList.clear()
         pos = self.rotate(-blockSize, -blockSize)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(0, -blockSize)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(-blockSize, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(0, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
 
     def jShape(self, window):
         self.posList.clear()
         pos = self.rotate(-blockSize, -blockSize)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(-blockSize, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(0, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(blockSize, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
 
     def lShape(self, window):
         self.posList.clear()
         pos = self.rotate(blockSize, -blockSize)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(blockSize, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(0, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(-blockSize, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
 
     def tShape(self, window):
         self.posList.clear()
         pos = self.rotate(blockSize, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(-blockSize, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(0, 0)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
         pos = self.rotate(0, -blockSize)
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
+        pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0], pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
+        pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
 
 # Handles rendering board and running pathfinding algorithms
 class Visualizer:
@@ -326,10 +451,10 @@ class Visualizer:
     def __init__(self):
         self.nodeWidth = (size - 100) // 10
         self.board = self.makeBoard()
-        self.curPiece = TetrisPiece(random.randrange(1,8),colorList[random.randrange(0,5)])
+        self.curPiece = TetrisPiece(3,colorList[random.randrange(0,5)])
         self.pieceSpeed = 1
-        self.pieceSet = set()
         self.gameOver = False
+        self.score = 0
 
     def makeBoard(self):
         retBoard = []
@@ -357,7 +482,6 @@ class Visualizer:
             for n in row:
                 n.drawRect(window)
 
-        self.drawBoard(window)
         if not self.gameOver:
             self.curPiece.drawPiece(window)
             if self.curPiece.getYMax() < size:
@@ -365,14 +489,56 @@ class Visualizer:
                 for pos in self.curPiece.getPosList():
                     y = ((pos[1] + blockSize) // blockSize)
                     x = ((pos[0] - offsetL) // blockSize)
-                    nextPos = (x, y)
-                    if nextPos in self.pieceSet:
+                    if x >= 0 and x < 10 and y >= 0 and self.board[y][x].getFilled():
                         self.boardAdd()
                         break
             else:
                 self.boardAdd()
 
         pygame.display.update()
+
+    def boardAdd(self):
+        for pos in self.curPiece.getPosList():
+            y = (pos[1] // blockSize)
+            x = ((pos[0] - offsetL) // blockSize)
+            if y >= 0:
+                self.board[y][x].setColor(self.curPiece.getColor())
+                self.board[y][x].isFilled()
+
+        self.rowCheck()
+
+        if self.curPiece.getYMin() // blockSize <= 0:
+            self.gameOver = True
+        else:
+            self.pieceSpeed = 1
+            self.curPiece = TetrisPiece(3,colorList[random.randrange(0,5)])
+
+    def rowCheck(self):
+        countSet = set()
+        for i in range(20):
+            count = 0
+            for j in self.board[i]:
+                if j.getFilled():
+                    count += 1
+
+                if count == 10:
+                    countSet.add(i)
+
+        if len(countSet) > 0:
+            tempList = []
+            for i in range(20):
+                innerList = []
+                for j in range(10):
+                    newNode = Node(((i * blockSize), (j * blockSize) + offsetL), buttonCol, blockSize)
+                    innerList.append(newNode)
+
+                tempList.append(innerList)
+
+            for i in range(20):
+                if i not in countSet:
+                    tempList.append(self.board[i])
+
+            self.board = tempList
 
     def resetBoard(self):
         self.board = self.makeBoard()
@@ -395,16 +561,6 @@ class Visualizer:
 
     def dropPiece(self):
         self.pieceSpeed = 20
-
-    def boardAdd(self):
-        for pos in self.curPiece.getPosList():
-            y = (pos[1] // blockSize)
-            x = ((pos[0] - offsetL) // blockSize)
-            self.pieceSet.add((x, y))
-            self.board[y][x].setColor(self.curPiece.getColor())
-
-        self.pieceSpeed = 1
-        self.curPiece = TetrisPiece(random.randrange(1,8),colorList[random.randrange(0,5)])
 
 def main(window):
     vis = Visualizer()
@@ -430,7 +586,6 @@ def main(window):
                     vis.rotatePiece(1)
                 elif event.key == pygame.K_SPACE:
                     vis.dropPiece()
-
 
     pygame.quit()
 
