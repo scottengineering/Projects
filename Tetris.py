@@ -1,6 +1,7 @@
 import random
 
 import pygame, sys
+from multiprocessing import pool
 import collections
 import math
 
@@ -16,7 +17,9 @@ pygame.display.set_caption("Tetris")
 font = pygame.font.SysFont('Constantia', 30)
 
 green = (114, 203, 59)
+teal = (0, 255, 255)
 yellow = (255, 213, 0)
+purple = (128, 0, 128)
 orange = (255, 151, 28)
 black = (0, 0, 0)
 white = (255, 255, 255)
@@ -24,7 +27,7 @@ red = (255, 50, 19)
 blue = (3, 65, 174)
 buttonCol = 189, 181, 177
 
-colorList = [blue, green, yellow, orange, red]
+colorList = [blue, green, yellow, orange, red, teal, purple]
 
 # Allows for the creation of a button with text and reaction to being pressed
 class Button:
@@ -60,9 +63,18 @@ class Node:
         self.x = pos[1]
         self.filled = False
 
+    def getX(self):
+        return self.x
+
+    def getY(self):
+        return self.y
+
     def getColor(self):
         self.color = red
         return self.color
+
+    def moveY(self, incr):
+        self.y += blockSize * incr
 
     def setColor(self, newColor):
         self.color = newColor
@@ -78,6 +90,8 @@ class Node:
 
     def drawRect(self, window):
         pygame.draw.rect(window, self.color, (self.x, self.y, self.width, self.width))
+
+    def drawOutline(self, window):
         if self.filled:
             pygame.draw.line(window, black, (self.x, self.y), (self.x + self.width, self.y))
             pygame.draw.line(window, black, (self.x, self.y), (self.x, self.y + self.width))
@@ -451,10 +465,11 @@ class Visualizer:
     def __init__(self):
         self.nodeWidth = (size - 100) // 10
         self.board = self.makeBoard()
-        self.curPiece = TetrisPiece(3,colorList[random.randrange(0,5)])
+        self.curPiece = TetrisPiece(random.randrange(1,8),colorList[random.randrange(0,7)])
         self.pieceSpeed = 1
         self.gameOver = False
         self.score = 0
+        self.scoreMap = {0 : 0, 1 : 40, 2 : 100, 3 : 300, 4 : 1200}
 
     def makeBoard(self):
         retBoard = []
@@ -478,9 +493,21 @@ class Visualizer:
             pygame.draw.line(window, black, (x, 0), (x, size))
 
     def draw(self, window):
-        for row in self.board:
-            for n in row:
-                n.drawRect(window)
+        for i in range(20):
+            iL = 0
+            iR = 1
+            while iR < 10:
+                self.board[i][iL].drawRect(window)
+                self.board[i][iR].drawRect(window)
+                self.board[i][iL].drawOutline(window)
+                self.board[i][iR].drawOutline(window)
+                if iL != 0:
+                    self.board[i][iL - 1].drawOutline(window)
+
+                iL += 1
+                iR += 1
+
+        self.drawScore(window)
 
         if not self.gameOver:
             self.curPiece.drawPiece(window)
@@ -511,34 +538,42 @@ class Visualizer:
             self.gameOver = True
         else:
             self.pieceSpeed = 1
-            self.curPiece = TetrisPiece(3,colorList[random.randrange(0,5)])
+            self.curPiece = TetrisPiece(random.randrange(1,8),colorList[random.randrange(0,7)])
 
     def rowCheck(self):
-        countSet = set()
-        for i in range(20):
+        prevRow = -1
+        rowDrop = 0
+        for i in range(19, -1, -1):
             count = 0
-            for j in self.board[i]:
-                if j.getFilled():
+            if prevRow == 0:
+                break
+            for j in range(10):
+                curSquare = self.board[i][j]
+
+                if curSquare.getFilled():
                     count += 1
 
-                if count == 10:
-                    countSet.add(i)
-
-        if len(countSet) > 0:
-            tempList = []
-            for i in range(20):
-                innerList = []
-                for j in range(10):
+                if rowDrop != 0:
+                    curSquare.moveY(rowDrop)
+                    self.board[i + rowDrop][j] = curSquare
                     newNode = Node(((i * blockSize), (j * blockSize) + offsetL), buttonCol, blockSize)
-                    innerList.append(newNode)
+                    self.board[i][j] = newNode
 
-                tempList.append(innerList)
+            if count == 10:
+                rowDrop += 1
+                self.score += self.scoreMap[rowDrop] * (i + 1)
 
-            for i in range(20):
-                if i not in countSet:
-                    tempList.append(self.board[i])
+            prevRow = count
 
-            self.board = tempList
+    def drawScore(self, window):
+        text1 = font.render("Score", True, white)
+        text2 = font.render("{0}".format(self.score), True, white)
+        sideRect = pygame.Rect(offSetR, 0, size - offSetR, blockSize * 10)
+        pygame.draw.rect(window, black, sideRect)
+        scoreText = pygame.Rect(offSetR + 50, 25, 50, 25)
+        scoreRect = pygame.Rect(offSetR + 50, 50, 50, 50)
+        window.blit(text1, scoreText.center)
+        window.blit(text2, scoreRect.center)
 
     def resetBoard(self):
         self.board = self.makeBoard()
