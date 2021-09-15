@@ -500,9 +500,7 @@ class Visualizer:
                 self.board[i][iL].drawRect(window)
                 self.board[i][iR].drawRect(window)
                 self.board[i][iL].drawOutline(window)
-
-                if iR == 9:
-                    self.board[i][iR].drawOutline(window)
+                self.board[i][iR].drawOutline(window)
 
                 if iL != 0:
                     self.board[i][iL - 1].drawOutline(window)
