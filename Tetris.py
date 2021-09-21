@@ -242,6 +242,9 @@ class TetrisPiece:
     def getPosList(self):
         return self.posList
 
+    def getRotate(self):
+        return self.rotateNum
+
     def sShape(self, window):
         self.posList.clear()
         pos = self.rotate(blockSize, -blockSize)
@@ -517,7 +520,7 @@ class Visualizer:
                 for pos in self.curPiece.getPosList():
                     y = ((pos[1] + blockSize) // blockSize)
                     x = ((pos[0] - offsetL) // blockSize)
-                    if x >= 0 and x < 10 and y >= 0 and self.board[y][x].getFilled():
+                    if x >= 0 and x < 10 and y >= 0 and y < 20 and self.board[y][x].getFilled():
                         self.boardAdd()
                         break
             else:
@@ -586,14 +589,51 @@ class Visualizer:
         self.curPiece = piece
 
     def movePieceX(self, incr):
-        if incr == 1 and self.curPiece.getXMax() < offSetR or incr == -1 and self.curPiece.getXMin() > offsetL:
-            self.curPiece.moveX(incr)
+        if incr == 1 and self.curPiece.getXMax() < offSetR:
+            canMove = True
+            for pos in self.curPiece.posList:
+                y = pos[1] // blockSize
+                x = (pos[0] - offsetL) // blockSize
+                if self.board[y][x + 1].getFilled():
+                    canMove = False
+                    break
+
+            if canMove:
+                self.curPiece.moveX(1)
+
+        elif incr == -1 and self.curPiece.getXMin() > offsetL:
+            canMove = True
+            for pos in self.curPiece.posList:
+                y = pos[1] // blockSize
+                x = (pos[0] - offsetL) // blockSize
+                if self.board[y][x - 1].getFilled():
+                    canMove = False
+                    break
+
+            if canMove:
+                self.curPiece.moveX(-1)
 
     def movePieceY(self, incr):
         self.curPiece.moveY(incr)
 
     def rotatePiece(self, num):
-        self.curPiece.newRotate(num)
+        curRotate = self.curPiece.getRotate()
+        if curRotate == 2 or curRotate == 4:
+            canRotate = True
+            for pos in self.curPiece.getPosList():
+                x = (pos[0] - offsetL) // blockSize
+                y = pos[1] // blockSize
+                if x + 1 < 10 and self.board[y][x + 1].getFilled():
+                    canRotate = False
+                    break
+                elif x - 1 >= 0 and self.board[y][x - 1].getFilled():
+                    canRotate = False
+                    break
+
+            if canRotate:
+                self.curPiece.newRotate(num)
+        else:
+            self.curPiece.newRotate(num)
 
     def dropPiece(self):
         self.pieceSpeed = 20
