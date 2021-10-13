@@ -38,6 +38,7 @@ class Button:
         self.text = font.render(text, True, black)
         self.textRect = self.text.get_rect(center = self.buttonRect.center)
 
+    # Renders the button and changes color if mouse is pressed
     def render(self, window):
         mPos = pygame.mouse.get_pos()
 
@@ -49,10 +50,11 @@ class Button:
 
         window.blit(self.text, self.textRect)
 
+    # Gives rectangle for button
     def getButtonRect(self):
         return self.buttonRect
 
-# Class allows creates a node in the board that holds render information as well as position
+# Class represents a square in the grid of the board
 class Node:
 
     def __init__(self, pos, color, width):
@@ -63,34 +65,44 @@ class Node:
         self.x = pos[1]
         self.filled = False
 
+    # Gives the left corner x coordinate of square
     def getX(self):
         return self.x
 
+    # Gives the left corner y coordinate of square
     def getY(self):
         return self.y
 
+    # Gives color of square
     def getColor(self):
         self.color = red
         return self.color
 
+    # Moves squares y position blocksize times incr
     def moveY(self, incr):
         self.y += blockSize * incr
 
+    # Sets color of square
     def setColor(self, newColor):
         self.color = newColor
 
+    # Gives position of square
     def getPosition(self):
         return self.pos
 
+    # Sets filled to true
     def isFilled(self):
         self.filled = True
 
+    # Is true if this square is  part of a tetris piece on the board
     def getFilled(self):
         return self.filled
 
+    # Renders the square
     def drawRect(self, window):
         pygame.draw.rect(window, self.color, (self.x, self.y, self.width, self.width))
 
+    # Draws a outline of the square
     def drawOutline(self, window):
         if self.filled:
             pygame.draw.line(window, black, (self.x, self.y), (self.x + self.width, self.y))
@@ -113,6 +125,7 @@ class TetrisPiece:
         self.yMax = blockSize
         self.yMin = -blockSize
         self.pieceNum = pieceNum
+        # PieceNum determines piece shape and then uses a certain shape function for rendering
         if pieceNum == 1:
             self.shape = self.sShape
         elif pieceNum == 2:
@@ -133,33 +146,43 @@ class TetrisPiece:
         elif pieceNum == 7:
             self.shape = self.tShape
 
+    # Draws entire piece
     def drawPiece(self, window):
         self.shape(window)
 
+    # Gives color of piece
     def getColor(self):
         return self.color
 
+    # Moves piece one pixel per increment on y axis
     def moveY(self, increment):
         self.y += increment
 
+    # Moves piece by a block times increments on x axis
     def moveX(self, increment):
         self.x += increment * blockSize
 
+    # Returns the upper left corner y coordinate
     def getY(self):
         return self.y
 
+    # Returns the farthest right coordinate of piece
     def getXMax(self):
         return self.x + self.xMax
 
+    # Returns the farthest left coordinate of piece
     def getXMin(self):
         return self.x + self.xMin
 
+    # Returns farthest north coordinate of piece
     def getYMax(self):
         return self.y + self.yMax
 
+    # Returns farthest south coordinate of piece
     def getYMin(self):
         return self.y + self.yMin
 
+    # Changes max and min for x and y based on rotation
     def newRotate(self, num):
         if self.rotateNum + num < 1:
             self.rotateNum = 4
@@ -224,11 +247,13 @@ class TetrisPiece:
                 self.xMin = -blockSize
                 self.yMax = blockSize * 2
 
+        # Ensures piece cant rotate off board
         if self.x + self.xMax > offSetR:
             self.x -= ((self.x + self.xMax) - offSetR)
         elif self.x + self.xMin < offsetL:
             self.x += (offsetL - (self.x + self.xMin))
 
+    # Rotates piece by changing how ech of the squares are oriented
     def rotate(self, x, y):
         if self.rotateNum == 1:
             return (self.x + x, self.y + y)
@@ -239,15 +264,21 @@ class TetrisPiece:
         elif self.rotateNum == 4:
             return (self.x + y, self.y + (x * -1))
 
+    # Returns a list of positions
     def getPosList(self):
         return self.posList
 
+    # Returns rotate number
     def getRotate(self):
         return self.rotateNum
 
+    # Produces S shape piece
     def sShape(self, window):
+        # Clear posList as the positions have changed
         self.posList.clear()
+        # Update pos of a particular block based on movement and rotation
         pos = self.rotate(blockSize, -blockSize)
+        # Append new pos to posList
         self.posList.append(pos)
         pygame.draw.rect(window, self.color, (pos[0], pos[1], blockSize, blockSize))
         pygame.draw.line(window, black, (pos[0], pos[1]), (pos[0] + blockSize, pos[1]))
@@ -276,6 +307,7 @@ class TetrisPiece:
         pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
         pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
 
+    # Produces Z shape piece
     def zShape(self, window):
         self.posList.clear()
         pos = self.rotate(-blockSize, -blockSize)
@@ -307,6 +339,7 @@ class TetrisPiece:
         pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
         pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
 
+    # Produces I shaped piece
     def iShape(self, window):
         self.posList.clear()
         pos = self.rotate(-(blockSize * 2), 0)
@@ -338,6 +371,7 @@ class TetrisPiece:
         pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
         pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
 
+    # Produces a box shaped piece
     def boxShape(self, window):
         self.posList.clear()
         pos = self.rotate(-blockSize, -blockSize)
@@ -369,6 +403,7 @@ class TetrisPiece:
         pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
         pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
 
+    # Produces J shaped piece
     def jShape(self, window):
         self.posList.clear()
         pos = self.rotate(-blockSize, -blockSize)
@@ -400,6 +435,7 @@ class TetrisPiece:
         pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
         pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
 
+    # Produces L shaped piece
     def lShape(self, window):
         self.posList.clear()
         pos = self.rotate(blockSize, -blockSize)
@@ -431,6 +467,7 @@ class TetrisPiece:
         pygame.draw.line(window, black, (pos[0] + blockSize, pos[1]), (pos[0] + blockSize, pos[1] + blockSize))
         pygame.draw.line(window, black, (pos[0], pos[1] + blockSize), (pos[0] + blockSize, pos[1] + blockSize))
 
+    # Produces T shaped piece
     def tShape(self, window):
         self.posList.clear()
         pos = self.rotate(blockSize, 0)
@@ -474,6 +511,7 @@ class Visualizer:
         self.score = 0
         self.scoreMap = {0 : 0, 1 : 40, 2 : 100, 3 : 300, 4 : 1200}
 
+    # Makes board based and physical size of the board changes based on block size
     def makeBoard(self):
         retBoard = []
         for i in range(20):
@@ -486,6 +524,7 @@ class Visualizer:
 
         return retBoard
 
+    # Renders board with grid
     def drawBoard(self, window):
         for i in range(20):
             y = i * blockSize
@@ -495,6 +534,7 @@ class Visualizer:
             x = offsetL + (j * blockSize)
             pygame.draw.line(window, black, (x, 0), (x, size))
 
+    # Renders board and pieces that have been placed
     def draw(self, window):
         for i in range(20):
             iL = 0
@@ -515,6 +555,7 @@ class Visualizer:
 
         if not self.gameOver:
             self.curPiece.drawPiece(window)
+            # Check to see if piece has hit bottom of board and if so add to board
             if self.curPiece.getYMax() < size:
                 self.curPiece.moveY(self.pieceSpeed)
                 for pos in self.curPiece.getPosList():
@@ -528,6 +569,7 @@ class Visualizer:
 
         pygame.display.update()
 
+    # Adds squares of piece to 2d board list
     def boardAdd(self):
         for pos in self.curPiece.getPosList():
             y = (pos[1] // blockSize)
@@ -544,6 +586,7 @@ class Visualizer:
             self.pieceSpeed = 1
             self.curPiece = TetrisPiece(random.randrange(1,8),colorList[random.randrange(0,7)])
 
+    # Check to see if a row has been filled and if so clear it and drop all above rows
     def rowCheck(self):
         prevRow = -1
         rowDrop = 0
@@ -569,6 +612,7 @@ class Visualizer:
 
             prevRow = count
 
+    # Draws score based on traditional Tetris rules
     def drawScore(self, window):
         text1 = font.render("Score", True, white)
         text2 = font.render("{0}".format(self.score), True, white)
@@ -579,15 +623,19 @@ class Visualizer:
         window.blit(text1, scoreText.center)
         window.blit(text2, scoreRect.center)
 
+    # Clears all squares of the board
     def resetBoard(self):
         self.board = self.makeBoard()
 
+    # Returns node at a given position
     def getNode(self, pos):
         return self.board[pos[0]][pos[1]]
 
+    # Adds new piece to board
     def addPiece(self, piece):
         self.curPiece = piece
 
+    # Moves piece in x direction one square but will stop if piece hits edges
     def movePieceX(self, incr):
         if incr == 1 and self.curPiece.getXMax() < offSetR:
             canMove = True
@@ -613,9 +661,11 @@ class Visualizer:
             if canMove:
                 self.curPiece.moveX(-1)
 
+    # Changes y movement speed of piece
     def movePieceY(self, incr):
         self.curPiece.moveY(incr)
 
+    # Rotates piece only if the rotate will not cause a collision with another piece
     def rotatePiece(self, num):
         curRotate = self.curPiece.getRotate()
         if curRotate == 2 or curRotate == 4:
@@ -635,6 +685,7 @@ class Visualizer:
         else:
             self.curPiece.newRotate(num)
 
+    # Will rapidly drop piece
     def dropPiece(self):
         self.pieceSpeed = 20
 
@@ -650,16 +701,21 @@ def main(window):
             if event.type == pygame.QUIT:
                 run = False
             elif event.type == pygame.KEYDOWN:
+                # a key is pressed the piece will move left
                 if event.key == pygame.K_a:
                     vis.movePieceX(-1)
                     vis.draw(window)
+                # d key is pressed the piece will move right
                 elif event.key == pygame.K_d:
                     vis.movePieceX(1)
                     vis.draw(window)
+                # q key is pressed rotates the piece -90 degrees
                 elif event.key == pygame.K_q:
                     vis.rotatePiece(-1)
+                # e key is pressed rotates piece 90 degrees
                 elif event.key == pygame.K_e:
                     vis.rotatePiece(1)
+                # spacebar pressed drops piece
                 elif event.key == pygame.K_SPACE:
                     vis.dropPiece()
 

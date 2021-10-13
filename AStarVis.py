@@ -26,6 +26,7 @@ class Button:
         self.text = font.render(text, True, black)
         self.textRect = self.text.get_rect(center = self.buttonRect.center)
 
+    # Renders Button
     def render(self, window):
         mPos = pygame.mouse.get_pos()
 
@@ -37,6 +38,7 @@ class Button:
 
         window.blit(self.text, self.textRect)
 
+    # Returns the rectangle for the button
     def getButtonRect(self):
         return self.buttonRect
 
